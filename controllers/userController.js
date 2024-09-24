@@ -54,59 +54,63 @@ export const registerController = async (req, res) => {
   }
 };
 
-//login  function
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
-    //vwlidtaion
+
+    // Validation
     if (!email || !password) {
-      return res.status(500).send({
+      return res.status(400).send({
         success: false,
-        message: "please add email or password",
+        message: "Please add email and password",
       });
     }
-    //checkig user exisst
+
+    // Checking user existence
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).send({
+      return res.status(401).send({
         success: false,
-        message: "not found",
+        message: "Invalid credentials",
       });
     }
-    //check password
+
+    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(500).send({
+      return res.status(401).send({
         success: false,
-        message: "Invalid credential",
+        message: "Invalid credentials",
       });
     }
-    //JWT token
+
+    // JWT token
     const token = user.generateToken();
 
     res
       .status(200)
       .cookie("token", token, {
         expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-        secure: process.env.NODE_ENV === "development" ? true : false,
-        httpOnly: process.env.NODE_ENV === "development" ? true : false,
-        sameSite: process.env.NODE_ENV === "development" ? true : false,
+        secure: process.env.NODE_ENV === "production", // Secure in production
+        httpOnly: true,
+        sameSite: "strict", // More secure option
       })
       .send({
         success: true,
-        message: "Login succesfully",
+        message: "Login successfully",
         token,
         user,
       });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
-      message: " error in login api",
+      message: "Error in login API",
       error,
     });
   }
 };
+
 
 //Get user profile
 export const getUserProfileController = async (req, res) => {
